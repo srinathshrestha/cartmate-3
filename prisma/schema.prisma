@@ -1,0 +1,94 @@
+// CartMate Database Schema
+// Simple collaborative shopping list app
+// Learn more about Prisma: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - connected to Clerk for authentication
+model User {
+  id          String @id @default(cuid())
+  clerkUserId String @unique
+  email       String
+  name        String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  ownedLists     ShoppingList[] @relation("ListOwner")
+  listMembers    ListMember[]
+  addedItems     Item[] @relation("ItemAdder")
+  completedItems Item[] @relation("ItemCompleter")
+  chatMessages   ChatMessage[]
+}
+
+// Shopping List model - can be private or shared
+model ShoppingList {
+  id         String @id @default(cuid())
+  name       String
+  ownerId    String
+  isShared   Boolean @default(false)  // Private vs Shared lists
+  inviteCode String? @unique          // Only for shared lists
+  createdAt  DateTime @default(now())
+
+  // Relations
+  owner        User @relation("ListOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members      ListMember[]  // Empty for private lists
+  items        Item[]
+  chatMessages ChatMessage[] // Empty for private lists
+}
+
+// List membership - tracks who belongs to which shared list
+model ListMember {
+  id       String @id @default(cuid())
+  listId   String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  // Relations
+  list ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, userId])
+}
+
+// Shopping list items - with quantity, category, and completion tracking
+model Item {
+  id            String @id @default(cuid())
+  listId        String
+  name          String
+  quantity      String           // Required field like "2 bottles"
+  description   String?          // Optional details like "2% fat"
+  category      String?          // Optional category like "Dairy"
+  isCompleted   Boolean @default(false)
+  addedById     String
+  completedById String?          // Track who completed the item
+  createdAt     DateTime @default(now())
+  completedAt   DateTime?        // When was it completed
+
+  // Relations
+  list        ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  addedBy     User @relation("ItemAdder", fields: [addedById], references: [id])
+  completedBy User? @relation("ItemCompleter", fields: [completedById], references: [id])
+}
+
+// Chat messages for shared lists only
+model ChatMessage {
+  id        String @id @default(cuid())
+  listId    String
+  userId    String
+  message   String
+  replyToId String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  list      ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replyTo   ChatMessage? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   ChatMessage[] @relation("MessageReplies")
+}
