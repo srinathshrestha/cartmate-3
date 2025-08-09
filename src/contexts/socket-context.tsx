@@ -80,11 +80,11 @@ const SocketContext = createContext<SocketContextType>({
   sendMessage: () => {},
   sendTypingStart: () => {},
   sendTypingStop: () => {},
-  onItemUpdate: () => {},
-  onNewMessage: () => {},
-  onUserJoined: () => {},
-  onUserLeft: () => {},
-  onUserTyping: () => {},
+  onItemUpdate: () => undefined,
+  onNewMessage: () => undefined,
+  onUserJoined: () => undefined,
+  onUserLeft: () => undefined,
+  onUserTyping: () => undefined,
   emitItemUpdate: () => {},
 });
 
