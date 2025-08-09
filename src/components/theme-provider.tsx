@@ -9,8 +9,12 @@ import {
   type ThemeProviderProps as NextThemeProviderProps,
 } from "next-themes";
 
-type ThemeProviderProps = Omit<NextThemeProviderProps, "attribute"> & {
+type ThemeProviderProps = Omit<
+  NextThemeProviderProps,
+  "attribute" | "value"
+> & {
   attribute?: "class" | "data-theme";
+  value?: Record<string, string>;
 };
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
